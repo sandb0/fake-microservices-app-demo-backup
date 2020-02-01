@@ -1,0 +1,54 @@
+version: "3.7"
+
+services:
+    users-service:
+        image: localhost:5000/users-service-image
+        ports: 
+            - "3000:3000"
+        environment:
+            PORT: 3000
+        
+        deploy:
+            replicas: 1
+            update_config:
+                #parallelism: 1
+                delay: 5s
+            restart_policy:
+                condition: on-failure
+        networks:
+            - api-gateway-network
+
+    spots-service:
+        image: localhost:5000/spots-service-image
+        ports: 
+            - "3001:3001"
+        environment:
+            PORT: 3001
+        
+        deploy:
+            replicas: 1
+            update_config:
+                #parallelism: 1
+                delay: 5s
+            restart_policy:
+                condition: on-failure
+        networks:
+            - api-gateway-network
+
+    api-gateway-service:
+        image: localhost:5000/api-gateway-image
+        ports:
+            - "80:80"
+        depends_on:
+            - users-service
+            - spots-service
+        
+        deploy:
+            placement:
+                constraints: [node.role == manager]
+        networks: 
+            - api-gateway-network
+
+networks:
+    api-gateway-network:
+        driver: overlay
